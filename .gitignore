@@ -1,0 +1,4 @@
+*.sw[op]
+dist
+dist-tests
+node_modules
