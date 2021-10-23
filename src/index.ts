@@ -11,6 +11,22 @@ import * as E from "@wymp/http-errors";
  * structures of an Express middleware function, but with many fewer requirements. This means it
  * can stay versatile and adaptable to upstream changes while still performing its core
  * functionality reliably.
+ *
+ * @param pubkey - A string representation of the public key used to sign the header (this assumes
+ * the algorithm is ES256; for now that's the only actual accepted algorithm). Key should be a
+ * standard PEM-formatted ECDSA public key.
+ * @param headerName - An optional parameter allowing you to specify the base name of the header
+ * used to pass auth information. There are three possible headers that a gateway can use to pass
+ * auth info:
+ *   * `[headerName]` is the actual auth info object, which is either a signed JWT (default) or a
+ *     JSON object.
+ *   * `[headerName]-signed` should be "0", "1" or undefined (defaults to "1" if undefined) and
+ *     specifies whether or not the auth info object is signed.
+ *   * `[headerName]-algorithm` should be one of the algorithms specified in the
+ *     [jsonwebtoken](https://www.npmjs.com/package/jsonwebtoken) library. For now, the only
+ *     accepted value is `ES256`.
+ * @returns An express middleware that will respond with an error if the auth gateway handshake
+ * isn't correct.
  */
 export const getAuthGatewayHeaderDecoder = (pubkey: string, headerName: string = "x-auth-info") => {
   return <T extends { header: (nm: string) => (string | undefined); }>(
@@ -77,7 +93,7 @@ export const getAuthGatewayHeaderDecoder = (pubkey: string, headerName: string =
   }
 }
 
-export function verifyAlgorithm(algo: string): asserts algo is jwt.Algorithm {
+function verifyAlgorithm(algo: string): asserts algo is jwt.Algorithm {
   const valid: Array<jwt.Algorithm> = [
     "HS256",
     "HS384",
